@@ -1,135 +1,132 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>تشخیص شکل و رنگ با هوش مصنوعی</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تشخیص شکل و رنگ | Cam</title>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      background: #101218;
-      color: #fff;
-      font-family: Tahoma, Arial, sans-serif;
-      text-align: center;
-    }
+body {
+  margin: 0;
+  background: #101218;
+  color: #fff;
+  font-family: Tahoma, Arial, sans-serif;
+  text-align: center;
+}
 
-    header {
-      padding: 20px;
-      background: #191d28;
-      border-bottom: 1px solid #34394a;
-    }
+header {
+  padding: 22px 12px;
+  background: #191d28;
+}
 
-    h1 { font-size: 23px; margin: 0 0 8px; }
-    p { color: #b7bdce; font-size: 14px; }
+h1 { font-size: 23px; }
 
-    main {
-      width: min(950px, 96%);
-      margin: 20px auto;
-    }
+main {
+  max-width: 850px;
+  margin: 20px auto;
+  padding: 10px;
+}
 
-    .camera {
-      position: relative;
-      overflow: hidden;
-      background: #000;
-      border: 2px solid #383e50;
-      border-radius: 16px;
-      min-height: 220px;
-    }
+button {
+  background: #ff9d00;
+  color: #111;
+  padding: 12px 20px;
+  margin: 6px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 15px;
+  cursor: pointer;
+}
 
-    video {
-      display: block;
-      width: 100%;
-      height: auto;
-      transform: scaleX(-1);
-    }
+button:disabled {
+  opacity: .5;
+  cursor: wait;
+}
 
-    canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      transform: scaleX(-1);
-    }
+.camera {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid #34394a;
+  border-radius: 14px;
+}
 
-    button {
-      background: #ff9d00;
-      color: #111;
-      border: 0;
-      border-radius: 10px;
-      padding: 13px 20px;
-      margin: 12px 5px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+video {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scaleX(-1);
+}
 
-    button:disabled {
-      opacity: .5;
-      cursor: wait;
-    }
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+  pointer-events: none;
+}
 
-    .panel {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-top: 15px;
-    }
+#status {
+  color: #ffc15a;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
 
-    .card {
-      background: #1b202c;
-      border: 1px solid #34394a;
-      border-radius: 12px;
-      padding: 16px 10px;
-    }
+.panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
 
-    .label {
-      color: #aeb6ca;
-      font-size: 13px;
-      margin-bottom: 9px;
-    }
+.card {
+  background: #1b202c;
+  border: 1px solid #34394a;
+  padding: 15px 8px;
+  border-radius: 12px;
+}
 
-    .value {
-      font-size: 19px;
-      font-weight: bold;
-      overflow-wrap: anywhere;
-    }
+.label {
+  color: #aeb6ca;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
 
-    #colorBox {
-      width: 35px;
-      height: 35px;
-      display: inline-block;
-      vertical-align: middle;
-      border-radius: 8px;
-      border: 1px solid #aaa;
-      margin-left: 8px;
-    }
+.value {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
 
-    #status {
-      color: #ffc15a;
-      padding: 12px;
-      line-height: 1.8;
-    }
+#colorBox {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  border: 1px solid white;
+  border-radius: 5px;
+}
 
-    footer {
-      color: #858da1;
-      padding: 20px;
-      font-size: 12px;
-    }
-  </style>
+footer {
+  padding: 20px;
+  color: #858da1;
+  font-size: 12px;
+}
+</style>
 </head>
 
 <body>
 <header>
   <h1>تشخیص زنده شکل و رنگ</h1>
-  <p>پردازش تصویر دوربین با OpenCV.js</p>
+  <div>Cam | OpenCV.js</div>
 </header>
 
 <main>
-  <button id="startBtn" disabled>در حال بارگذاری کتابخانه...</button>
+  <button id="startBtn" disabled>در حال آماده‌سازی...</button>
   <button id="stopBtn" disabled>خاموش کردن دوربین</button>
 
   <div class="camera">
@@ -137,26 +134,26 @@
     <canvas id="overlay"></canvas>
   </div>
 
-  <div id="status">در حال بارگذاری OpenCV.js ...</div>
+  <p id="status">در حال بارگذاری OpenCV.js...</p>
 
   <section class="panel">
     <div class="card">
-      <div class="label">شکل‌های تشخیص‌داده‌شده</div>
+      <div class="label">تعداد شکل‌ها</div>
       <div class="value" id="shapeCount">۰</div>
     </div>
 
     <div class="card">
-      <div class="label">شکل‌های موجود</div>
+      <div class="label">شکل‌های تشخیص‌داده‌شده</div>
       <div class="value" id="shapeNames">---</div>
     </div>
 
     <div class="card">
-      <div class="label">رنگ غالب تقریبی</div>
+      <div class="label">رنگ تقریبی تصویر</div>
       <div class="value" id="colorName">---</div>
     </div>
 
     <div class="card">
-      <div class="label">نمونه رنگ</div>
+      <div class="label">نمونه رنگ و RGB</div>
       <span id="colorBox"></span>
       <span id="rgbValue">---</span>
     </div>
@@ -164,272 +161,346 @@
 </main>
 
 <footer>
-  پردازش تصویر در مرورگر انجام می‌شود.
+پردازش تصویر در مرورگر انجام می‌شود.
 </footer>
 
 <script>
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("overlay");
-  const ctx = canvas.getContext("2d");
+const video = document.getElementById("video");
+const overlay = document.getElementById("overlay");
+const ctx = overlay.getContext("2d");
 
-  const startBtn = document.getElementById("startBtn");
-  const stopBtn = document.getElementById("stopBtn");
-  const statusEl = document.getElementById("status");
+const startBtn = document.getElementById("startBtn");
+const stopBtn = document.getElementById("stopBtn");
+const statusEl = document.getElementById("status");
 
-  let stream = null;
-  let timer = null;
-  let cvReady = false;
-  let processing = false;
+let stream = null;
+let timer = null;
+let cvReady = false;
+let processing = false;
 
-  function setStatus(text) {
-    statusEl.textContent = text;
+function status(text) {
+  statusEl.textContent = text;
+}
+
+// OpenCV.js باید پس از بارگذاری کامل آماده شود.
+window.Module = {
+  onRuntimeInitialized() {
+    cvReady = true;
+    startBtn.disabled = false;
+    startBtn.textContent = "روشن کردن دوربین";
+    status("OpenCV.js آماده است.");
   }
+};
 
-  // منتظر آماده‌شدن OpenCV.js می‌مانیم.
-  window.Module = {
-    onRuntimeInitialized() {
+function checkOpenCV() {
+  if (cvReady || !window.cv) return;
+
+  try {
+    if (cv.Mat && cv.VideoCapture && cv.CV_8UC4 !== undefined) {
       cvReady = true;
       startBtn.disabled = false;
       startBtn.textContent = "روشن کردن دوربین";
-      setStatus("کتابخانه آماده است. دوربین را روشن کنید.");
+      status("OpenCV.js آماده است.");
     }
-  };
+  } catch (_) {}
+}
 
-  // اگر فایل محلی Module را نادیده گرفت، آماده‌شدن را بررسی می‌کنیم.
-  const cvCheck = setInterval(() => {
-    if (window.cv && cv.Mat && !cvReady) {
-      try {
-        if (cv.getBuildInformation) {
-          cv.getBuildInformation();
-          cvReady = true;
-          startBtn.disabled = false;
-          startBtn.textContent = "روشن کردن دوربین";
-          setStatus("OpenCV.js آماده است.");
-          clearInterval(cvCheck);
-        }
-      } catch (_) {}
-    }
-  }, 300);
+const cvTimer = setInterval(() => {
+  checkOpenCV();
+  if (cvReady) clearInterval(cvTimer);
+}, 300);
 
-  startBtn.addEventListener("click", startCamera);
-  stopBtn.addEventListener("click", stopCamera);
+startBtn.addEventListener("click", startCamera);
+stopBtn.addEventListener("click", stopCamera);
 
-  async function startCamera() {
-    if (!cvReady) {
-      setStatus("هنوز OpenCV.js آماده نشده است.");
-      return;
-    }
+async function startCamera() {
+  if (!cvReady) {
+    status("کتابخانه هنوز آماده نیست.");
+    return;
+  }
 
-    try {
-      startBtn.disabled = true;
-      setStatus("در انتظار اجازه دسترسی به دوربین...");
+  if (!navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia) {
+    status("دوربین در این محیط پشتیبانی نمی‌شود. از HTTPS استفاده کنید.");
+    return;
+  }
 
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        },
-        audio: false
-      });
+  startBtn.disabled = true;
 
-      video.srcObject = stream;
+  try {
+    status("در انتظار اجازه دسترسی به دوربین...");
 
-      await new Promise(resolve => {
-        video.onloadedmetadata = resolve;
-      });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      },
+      audio: false
+    });
 
-      await video.play();
+    video.srcObject = stream;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    await new Promise((resolve, reject) => {
+      if (video.readyState >= 1 && video.videoWidth) {
+        resolve();
+        return;
+      }
 
-      stopBtn.disabled = false;
-      startBtn.textContent = "دوربین روشن است";
-      setStatus("دوربین فعال است؛ در حال تشخیص شکل و رنگ...");
-
-      timer = setInterval(processFrame, 350);
-
-    } catch (error) {
-      startBtn.disabled = false;
-      startBtn.textContent = "تلاش دوباره";
-
-      setStatus(
-        "خطای دوربین: " + error.message +
-        " | صفحه را با HTTPS یا localhost باز کنید و اجازه دوربین بدهید."
+      video.onloadedmetadata = resolve;
+      video.onerror = () => reject(
+        new Error("بارگذاری تصویر دوربین ناموفق بود.")
       );
-    }
+    });
+
+    await video.play();
+
+    overlay.width = video.videoWidth;
+    overlay.height = video.videoHeight;
+
+    stopBtn.disabled = false;
+    startBtn.textContent = "دوربین فعال است";
+
+    status("دوربین روشن شد؛ در حال تحلیل تصویر...");
+
+    timer = setInterval(processFrame, 300);
+
+  } catch (error) {
+    startBtn.disabled = false;
+    startBtn.textContent = "تلاش دوباره";
+
+    status("خطا: " + error.message);
+    stopCamera(false);
+  }
+}
+
+function stopCamera(updateStatus = true) {
+  if (timer) clearInterval(timer);
+  timer = null;
+
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
   }
 
-  function stopCamera() {
-    if (timer) clearInterval(timer);
-    timer = null;
+  stream = null;
+  video.srcObject = null;
 
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-    stream = null;
-    video.srcObject = null;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stopBtn.disabled = true;
+  startBtn.disabled = !cvReady;
+  startBtn.textContent = "روشن کردن دوربین";
 
-    stopBtn.disabled = true;
-    startBtn.disabled = !cvReady;
-    startBtn.textContent = "روشن کردن دوربین";
+  if (updateStatus) status("دوربین خاموش است.");
+}
 
-    setStatus("دوربین خاموش است.");
-  }
+function classifyShape(contour) {
+  const perimeter = cv.arcLength(contour, true);
 
-  function classifyShape(contour) {
-    const perimeter = cv.arcLength(contour, true);
-    if (perimeter <= 0) return null;
+  if (perimeter < 1) return null;
 
-    const approx = new cv.Mat();
-    cv.approxPolyDP(contour, approx, 0.035 * perimeter, true);
+  const approx = new cv.Mat();
+
+  try {
+    cv.approxPolyDP(
+      contour,
+      approx,
+      0.035 * perimeter,
+      true
+    );
 
     const vertices = approx.rows;
     const area = cv.contourArea(contour);
-    const circularity = (4 * Math.PI * area) / (perimeter * perimeter);
+    const circularity =
+      (4 * Math.PI * area) / (perimeter * perimeter);
 
-    let name = null;
+    if (vertices === 3) return "مثلث";
 
-    if (vertices === 3) {
-      name = "مثلث";
-    } else if (vertices === 4) {
+    if (vertices === 4) {
       const rect = cv.boundingRect(approx);
       const ratio = rect.width / rect.height;
 
-      name = ratio > 0.85 && ratio < 1.15
+      return ratio > 0.85 && ratio < 1.15
         ? "مربع"
         : "مستطیل";
-    } else if (vertices >= 5 && circularity > 0.72) {
-      name = "دایره";
-    } else if (vertices >= 5 && circularity > 0.55) {
-      name = "بیضی";
     }
 
+    if (vertices >= 5 && circularity > 0.75) {
+      return "دایره";
+    }
+
+    if (vertices >= 5 && circularity > 0.55) {
+      return "بیضی";
+    }
+
+    return null;
+
+  } finally {
     approx.delete();
-    return name;
+  }
+}
+
+function detectColor(src) {
+  // نمونه‌برداری از مرکز تصویر
+  const x = Math.floor(src.cols / 2);
+  const y = Math.floor(src.rows / 2);
+
+  const pixel = src.ucharPtr(y, x);
+
+  const r = pixel[0];
+  const g = pixel[1];
+  const b = pixel[2];
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+
+  let name;
+
+  if (max < 45) {
+    name = "سیاه";
+  } else if (min > 210) {
+    name = "سفید";
+  } else if (max - min < 25) {
+    name = max < 125 ? "خاکستری" : "خاکستری روشن";
+  } else if (r >= g && r >= b) {
+    name = g > b + 35 ? "نارنجی" : "قرمز";
+  } else if (g >= r && g >= b) {
+    name = r > b + 30 ? "زرد" : "سبز";
+  } else {
+    name = g > r + 30 ? "فیروزه‌ای" : "آبی";
   }
 
-  function detectColor(mat) {
-    const small = new cv.Mat();
-    cv.resize(mat, small, new cv.Size(1, 1), 0, 0, cv.INTER_AREA);
+  document.getElementById("colorName").textContent = name;
 
-    const pixel = small.ucharPtr(0, 0);
-    const b = pixel[0];
-    const g = pixel[1];
-    const r = pixel[2];
+  document.getElementById("colorBox").style.backgroundColor =
+    `rgb(${r}, ${g}, ${b})`;
 
-    small.delete();
+  document.getElementById("rgbValue").textContent =
+    `${r}, ${g}, ${b}`;
+}
 
-    let name;
+function processFrame() {
+  if (processing || !stream || video.readyState < 2) return;
 
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
+  processing = true;
 
-    if (max < 45) {
-      name = "سیاه";
-    } else if (min > 210) {
-      name = "سفید";
-    } else if (max - min < 25) {
-      name = max < 125 ? "خاکستری" : "خاکستری روشن";
-    } else if (r >= g && r >= b) {
-      name = g > b + 35 ? "نارنجی" : "قرمز";
-    } else if (g >= r && g >= b) {
-      name = r > b + 30 ? "زرد" : "سبز";
-    } else {
-      name = g > r + 30 ? "فیروزه‌ای" : "آبی";
-    }
+  let src = null;
+  let gray = null;
+  let blurred = null;
+  let edges = null;
+  let contours = null;
+  let hierarchy = null;
+  let cap = null;
 
-    document.getElementById("colorName").textContent = name;
-    document.getElementById("colorBox").style.backgroundColor =
-      `rgb(${r}, ${g}, ${b})`;
-    document.getElementById("rgbValue").textContent =
-      `${r}, ${g}, ${b}`;
-  }
+  try {
+    // خواندن فریم دوربین با VideoCapture
+    src = new cv.Mat(
+      video.videoHeight,
+      video.videoWidth,
+      cv.CV_8UC4
+    );
 
-  function processFrame() {
-    if (processing || video.readyState < 2 || !cvReady) return;
-    processing = true;
+    cap = new cv.VideoCapture(video);
+    cap.read(src);
 
-    let src, gray, blurred, edges, contours, hierarchy;
+    if (src.empty()) return;
 
-    try {
-      src = cv.imread(video);
+    detectColor(src);
 
-      // تشخیص رنگ تقریبی کل تصویر.
-      detectColor(src);
+    gray = new cv.Mat();
+    blurred = new cv.Mat();
+    edges = new cv.Mat();
+    contours = new cv.MatVector();
+    hierarchy = new cv.Mat();
 
-      gray = new cv.Mat();
-      blurred = new cv.Mat();
-      edges = new cv.Mat();
-      contours = new cv.MatVector();
-      hierarchy = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-      cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-      cv.Canny(blurred, edges, 55, 140);
+    cv.GaussianBlur(
+      gray,
+      blurred,
+      new cv.Size(5, 5),
+      0
+    );
 
-      cv.findContours(
-        edges,
-        contours,
-        hierarchy,
-        cv.RETR_EXTERNAL,
-        cv.CHAIN_APPROX_SIMPLE
-      );
+    cv.Canny(blurred, edges, 55, 140);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    cv.findContours(
+      edges,
+      contours,
+      hierarchy,
+      cv.RETR_EXTERNAL,
+      cv.CHAIN_APPROX_SIMPLE
+    );
 
-      const found = [];
-      let count = 0;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-      for (let i = 0; i < contours.size(); i++) {
-        const contour = contours.get(i);
-        const area = cv.contourArea(contour);
+    const found = [];
+    let count = 0;
 
-        if (area < 900) {
-          contour.delete();
-          continue;
-        }
+    for (let i = 0; i < contours.size(); i++) {
+      const contour = contours.get(i);
+
+      try {
+        if (cv.contourArea(contour) < 900) continue;
 
         const name = classifyShape(contour);
+        if (!name) continue;
 
-        if (name) {
-          const rect = cv.boundingRect(contour);
+        const rect = cv.boundingRect(contour);
 
-          ctx.strokeStyle = "#00ff9d";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.strokeStyle = "#00ff9d";
+        ctx.lineWidth = 3;
 
-          ctx.fillStyle = "#00ff9d";
-          ctx.font = "bold 18px Tahoma";
-          ctx.fillText(name, rect.x + 5, Math.max(22, rect.y - 7));
+        ctx.strokeRect(
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height
+        );
 
-          found.push(name);
-          count++;
-        }
+        ctx.fillStyle = "#00ff9d";
+        ctx.font = "bold 18px Tahoma";
 
+        ctx.fillText(
+          name,
+          rect.x + 5,
+          Math.max(22, rect.y - 7)
+        );
+
+        found.push(name);
+        count++;
+
+      } finally {
         contour.delete();
       }
-
-      document.getElementById("shapeCount").textContent = count;
-      document.getElementById("shapeNames").textContent =
-        [...new Set(found)].join("، ") || "شکلی پیدا نشد";
-
-      setStatus("تشخیص زنده فعال است.");
-
-    } catch (error) {
-      setStatus("خطا در پردازش تصویر: " + error.message);
-    } finally {
-      [src, gray, blurred, edges, contours, hierarchy]
-        .forEach(mat => {
-          if (mat) mat.delete();
-        });
-
-      processing = false;
     }
+
+    document.getElementById("shapeCount").textContent =
+      String(count);
+
+    document.getElementById("shapeNames").textContent =
+      [...new Set(found)].join("، ") || "شکلی پیدا نشد";
+
+    status("تشخیص زنده فعال است.");
+
+  } catch (error) {
+    status("خطای پردازش تصویر: " + error.message);
+
+  } finally {
+    [
+      src,
+      gray,
+      blurred,
+      edges,
+      contours,
+      hierarchy
+    ].forEach(mat => {
+      if (mat) mat.delete();
+    });
+
+    processing = false;
   }
+}
 </script>
 
 <script async src="./opencv.js"></script>
