@@ -3,25 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>تشخیص شکل و رنگ | Cam</title>
+<title>Cam | تشخیص شکل و رنگ</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   background: #101218;
-  color: #fff;
+  color: white;
   font-family: Tahoma, Arial, sans-serif;
   text-align: center;
 }
 
 header {
-  padding: 22px 12px;
+  padding: 20px 10px;
   background: #191d28;
+  border-bottom: 1px solid #34394a;
 }
 
-h1 { font-size: 23px; }
+h1 {
+  font-size: 23px;
+  margin: 0 0 10px;
+}
 
 main {
   max-width: 850px;
@@ -32,17 +38,18 @@ main {
 button {
   background: #ff9d00;
   color: #111;
-  padding: 12px 20px;
-  margin: 6px;
-  border: 0;
+  border: none;
   border-radius: 9px;
+  padding: 13px 20px;
+  margin: 5px;
   font-size: 15px;
+  font-weight: bold;
   cursor: pointer;
 }
 
 button:disabled {
   opacity: .5;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .camera {
@@ -54,7 +61,7 @@ button:disabled {
   border-radius: 14px;
 }
 
-video {
+#video {
   display: block;
   width: 100%;
   height: auto;
@@ -63,8 +70,7 @@ video {
 
 #overlay {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   transform: scaleX(-1);
@@ -87,8 +93,8 @@ video {
 .card {
   background: #1b202c;
   border: 1px solid #34394a;
-  padding: 15px 8px;
   border-radius: 12px;
+  padding: 16px 8px;
 }
 
 .label {
@@ -104,11 +110,11 @@ video {
 
 #colorBox {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
+  width: 25px;
+  height: 25px;
   border: 1px solid white;
   border-radius: 5px;
+  vertical-align: middle;
 }
 
 footer {
@@ -120,23 +126,31 @@ footer {
 </head>
 
 <body>
+
 <header>
   <h1>تشخیص زنده شکل و رنگ</h1>
   <div>Cam | OpenCV.js</div>
 </header>
 
 <main>
-  <button id="startBtn" disabled>در حال آماده‌سازی...</button>
-  <button id="stopBtn" disabled>خاموش کردن دوربین</button>
+
+  <button id="startBtn" disabled>
+    در حال بارگذاری OpenCV...
+  </button>
+
+  <button id="stopBtn" disabled>
+    خاموش کردن دوربین
+  </button>
 
   <div class="camera">
     <video id="video" autoplay playsinline muted></video>
     <canvas id="overlay"></canvas>
   </div>
 
-  <p id="status">در حال بارگذاری OpenCV.js...</p>
+  <p id="status">در حال آماده‌سازی کتابخانه...</p>
 
   <section class="panel">
+
     <div class="card">
       <div class="label">تعداد شکل‌ها</div>
       <div class="value" id="shapeCount">۰</div>
@@ -148,7 +162,7 @@ footer {
     </div>
 
     <div class="card">
-      <div class="label">رنگ تقریبی تصویر</div>
+      <div class="label">رنگ تقریبی مرکز تصویر</div>
       <div class="value" id="colorName">---</div>
     </div>
 
@@ -157,14 +171,23 @@ footer {
       <span id="colorBox"></span>
       <span id="rgbValue">---</span>
     </div>
+
   </section>
+
 </main>
 
 <footer>
-پردازش تصویر در مرورگر انجام می‌شود.
+  پردازش تصویر در مرورگر انجام می‌شود.
 </footer>
 
 <script>
+/*
+  نکته:
+  در این پروژه از cv.imread() استفاده نمی‌کنیم.
+  تصویر دوربین را به Canvas می‌کشیم و داده‌های RGBA
+  را مستقیماً در حافظه Mat قرار می‌دهیم.
+*/
+
 const video = document.getElementById("video");
 const overlay = document.getElementById("overlay");
 const ctx = overlay.getContext("2d");
@@ -173,41 +196,56 @@ const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const statusEl = document.getElementById("status");
 
+const inputCanvas = document.createElement("canvas");
+const inputCtx = inputCanvas.getContext("2d", {
+  willReadFrequently: true
+});
+
 let stream = null;
 let timer = null;
 let cvReady = false;
 let processing = false;
+let lastError = "";
 
-function status(text) {
-  statusEl.textContent = text;
+function setStatus(message) {
+  statusEl.textContent = message;
 }
 
-// OpenCV.js باید پس از بارگذاری کامل آماده شود.
+/* آماده‌سازی OpenCV.js */
+
 window.Module = {
   onRuntimeInitialized() {
     cvReady = true;
     startBtn.disabled = false;
     startBtn.textContent = "روشن کردن دوربین";
-    status("OpenCV.js آماده است.");
+    setStatus("OpenCV.js آماده است.");
   }
 };
 
-function checkOpenCV() {
-  if (cvReady || !window.cv) return;
+/*
+  برخی نسخه‌های OpenCV.js ممکن است callback را
+  متفاوت اجرا کنند؛ این بررسی نیز آمادگی را کنترل می‌کند.
+*/
+const readyCheck = setInterval(() => {
+  if (cvReady) {
+    clearInterval(readyCheck);
+    return;
+  }
 
   try {
-    if (cv.Mat && cv.VideoCapture && cv.CV_8UC4 !== undefined) {
+    if (
+      window.cv &&
+      cv.Mat &&
+      cv.VideoCapture &&
+      cv.CV_8UC4 !== undefined
+    ) {
       cvReady = true;
       startBtn.disabled = false;
       startBtn.textContent = "روشن کردن دوربین";
-      status("OpenCV.js آماده است.");
+      setStatus("OpenCV.js آماده است.");
+      clearInterval(readyCheck);
     }
   } catch (_) {}
-}
-
-const cvTimer = setInterval(() => {
-  checkOpenCV();
-  if (cvReady) clearInterval(cvTimer);
 }, 300);
 
 startBtn.addEventListener("click", startCamera);
@@ -215,20 +253,27 @@ stopBtn.addEventListener("click", stopCamera);
 
 async function startCamera() {
   if (!cvReady) {
-    status("کتابخانه هنوز آماده نیست.");
+    setStatus("OpenCV.js هنوز آماده نشده است.");
     return;
   }
 
-  if (!navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia) {
-    status("دوربین در این محیط پشتیبانی نمی‌شود. از HTTPS استفاده کنید.");
+  if (stream) return;
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+    setStatus(
+      "دسترسی دوربین در این آدرس ممکن نیست. " +
+      "از HTTPS یا localhost استفاده کنید."
+    );
     return;
   }
 
   startBtn.disabled = true;
 
   try {
-    status("در انتظار اجازه دسترسی به دوربین...");
+    setStatus("در انتظار اجازه دسترسی به دوربین...");
 
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -242,47 +287,57 @@ async function startCamera() {
     video.srcObject = stream;
 
     await new Promise((resolve, reject) => {
-      if (video.readyState >= 1 && video.videoWidth) {
+      if (video.readyState >= 1 && video.videoWidth > 0) {
         resolve();
         return;
       }
 
       video.onloadedmetadata = resolve;
-      video.onerror = () => reject(
-        new Error("بارگذاری تصویر دوربین ناموفق بود.")
-      );
+
+      video.onerror = () => {
+        reject(new Error("تصویر دوربین بارگذاری نشد."));
+      };
     });
 
     await video.play();
 
-    overlay.width = video.videoWidth;
-    overlay.height = video.videoHeight;
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    inputCanvas.width = width;
+    inputCanvas.height = height;
+
+    overlay.width = width;
+    overlay.height = height;
 
     stopBtn.disabled = false;
     startBtn.textContent = "دوربین فعال است";
 
-    status("دوربین روشن شد؛ در حال تحلیل تصویر...");
+    setStatus("دوربین روشن شد؛ در حال تشخیص شکل و رنگ...");
 
-    timer = setInterval(processFrame, 300);
+    timer = setInterval(processFrame, 250);
 
   } catch (error) {
+    stopCamera(false);
+
     startBtn.disabled = false;
     startBtn.textContent = "تلاش دوباره";
 
-    status("خطا: " + error.message);
-    stopCamera(false);
+    setStatus("خطای دوربین: " + error.message);
   }
 }
 
-function stopCamera(updateStatus = true) {
-  if (timer) clearInterval(timer);
-  timer = null;
+function stopCamera(showMessage = true) {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
 
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
+    stream = null;
   }
 
-  stream = null;
   video.srcObject = null;
 
   ctx.clearRect(0, 0, overlay.width, overlay.height);
@@ -291,13 +346,19 @@ function stopCamera(updateStatus = true) {
   startBtn.disabled = !cvReady;
   startBtn.textContent = "روشن کردن دوربین";
 
-  if (updateStatus) status("دوربین خاموش است.");
+  if (showMessage) {
+    setStatus("دوربین خاموش است.");
+  }
 }
+
+/* تشخیص شکل هندسی */
 
 function classifyShape(contour) {
   const perimeter = cv.arcLength(contour, true);
 
-  if (perimeter < 1) return null;
+  if (perimeter <= 0) {
+    return null;
+  }
 
   const approx = new cv.Mat();
 
@@ -305,27 +366,35 @@ function classifyShape(contour) {
     cv.approxPolyDP(
       contour,
       approx,
-      0.035 * perimeter,
+      perimeter * 0.035,
       true
     );
 
     const vertices = approx.rows;
     const area = cv.contourArea(contour);
-    const circularity =
-      (4 * Math.PI * area) / (perimeter * perimeter);
 
-    if (vertices === 3) return "مثلث";
+    const circularity =
+      (4 * Math.PI * area) /
+      (perimeter * perimeter);
+
+    if (vertices === 3) {
+      return "مثلث";
+    }
 
     if (vertices === 4) {
       const rect = cv.boundingRect(approx);
-      const ratio = rect.width / rect.height;
 
-      return ratio > 0.85 && ratio < 1.15
-        ? "مربع"
-        : "مستطیل";
+      const ratio =
+        rect.width / Math.max(1, rect.height);
+
+      if (ratio > 0.85 && ratio < 1.15) {
+        return "مربع";
+      }
+
+      return "مستطیل";
     }
 
-    if (vertices >= 5 && circularity > 0.75) {
+    if (vertices >= 5 && circularity > 0.76) {
       return "دایره";
     }
 
@@ -340,16 +409,19 @@ function classifyShape(contour) {
   }
 }
 
-function detectColor(src) {
-  // نمونه‌برداری از مرکز تصویر
-  const x = Math.floor(src.cols / 2);
-  const y = Math.floor(src.rows / 2);
+/* تشخیص رنگ مرکز تصویر */
 
-  const pixel = src.ucharPtr(y, x);
+function detectColor(imageData) {
+  const data = imageData.data;
 
-  const r = pixel[0];
-  const g = pixel[1];
-  const b = pixel[2];
+  const cx = Math.floor(imageData.width / 2);
+  const cy = Math.floor(imageData.height / 2);
+
+  const index = (cy * imageData.width + cx) * 4;
+
+  const r = data[index];
+  const g = data[index + 1];
+  const b = data[index + 2];
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -379,8 +451,17 @@ function detectColor(src) {
     `${r}, ${g}, ${b}`;
 }
 
+/* تحلیل فریم دوربین */
+
 function processFrame() {
-  if (processing || !stream || video.readyState < 2) return;
+  if (
+    processing ||
+    !stream ||
+    video.readyState < 2 ||
+    !video.videoWidth
+  ) {
+    return;
+  }
 
   processing = true;
 
@@ -390,22 +471,46 @@ function processFrame() {
   let edges = null;
   let contours = null;
   let hierarchy = null;
-  let cap = null;
 
   try {
-    // خواندن فریم دوربین با VideoCapture
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    /*
+      مرحله اول:
+      فریم دوربین را مستقیماً به Canvas منتقل می‌کنیم.
+      هیچ فراخوانی cv.imread() وجود ندارد.
+    */
+
+    inputCtx.drawImage(
+      video,
+      0,
+      0,
+      width,
+      height
+    );
+
+    const imageData = inputCtx.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
+
+    detectColor(imageData);
+
+    /*
+      مرحله دوم:
+      داده‌های RGBA را مستقیماً در Mat کپی می‌کنیم.
+    */
+
     src = new cv.Mat(
-      video.videoHeight,
-      video.videoWidth,
+      height,
+      width,
       cv.CV_8UC4
     );
 
-    cap = new cv.VideoCapture(video);
-    cap.read(src);
-
-    if (src.empty()) return;
-
-    detectColor(src);
+    src.data.set(imageData.data);
 
     gray = new cv.Mat();
     blurred = new cv.Mat();
@@ -413,7 +518,11 @@ function processFrame() {
     contours = new cv.MatVector();
     hierarchy = new cv.Mat();
 
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.cvtColor(
+      src,
+      gray,
+      cv.COLOR_RGBA2GRAY
+    );
 
     cv.GaussianBlur(
       gray,
@@ -422,7 +531,12 @@ function processFrame() {
       0
     );
 
-    cv.Canny(blurred, edges, 55, 140);
+    cv.Canny(
+      blurred,
+      edges,
+      55,
+      140
+    );
 
     cv.findContours(
       edges,
@@ -432,7 +546,15 @@ function processFrame() {
       cv.CHAIN_APPROX_SIMPLE
     );
 
-    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    ctx.clearRect(
+      0,
+      0,
+      overlay.width,
+      overlay.height
+    );
+
+    ctx.font = "bold 18px Tahoma";
+    ctx.lineWidth = 3;
 
     const found = [];
     let count = 0;
@@ -441,15 +563,21 @@ function processFrame() {
       const contour = contours.get(i);
 
       try {
-        if (cv.contourArea(contour) < 900) continue;
+        const area = cv.contourArea(contour);
+
+        if (area < 900) {
+          continue;
+        }
 
         const name = classifyShape(contour);
-        if (!name) continue;
+
+        if (!name) {
+          continue;
+        }
 
         const rect = cv.boundingRect(contour);
 
         ctx.strokeStyle = "#00ff9d";
-        ctx.lineWidth = 3;
 
         ctx.strokeRect(
           rect.x,
@@ -459,7 +587,6 @@ function processFrame() {
         );
 
         ctx.fillStyle = "#00ff9d";
-        ctx.font = "bold 18px Tahoma";
 
         ctx.fillText(
           name,
@@ -479,12 +606,18 @@ function processFrame() {
       String(count);
 
     document.getElementById("shapeNames").textContent =
-      [...new Set(found)].join("، ") || "شکلی پیدا نشد";
+      [...new Set(found)].join("، ") ||
+      "شکلی پیدا نشد";
 
-    status("تشخیص زنده فعال است.");
+    setStatus("دوربین فعال است؛ تحلیل تصویر انجام می‌شود.");
 
   } catch (error) {
-    status("خطای پردازش تصویر: " + error.message);
+    const message = error.message || String(error);
+
+    if (message !== lastError) {
+      lastError = message;
+      setStatus("خطای پردازش تصویر: " + message);
+    }
 
   } finally {
     [
@@ -495,7 +628,9 @@ function processFrame() {
       contours,
       hierarchy
     ].forEach(mat => {
-      if (mat) mat.delete();
+      if (mat) {
+        mat.delete();
+      }
     });
 
     processing = false;
@@ -503,6 +638,8 @@ function processFrame() {
 }
 </script>
 
+<!-- فایل باید در کنار index.html باشد. -->
 <script async src="./opencv.js"></script>
+
 </body>
 </html>
